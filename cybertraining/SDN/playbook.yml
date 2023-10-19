@@ -1,0 +1,13 @@
+---
+- hosts: all
+
+  roles:
+  - role: base
+  - role: bspwm
+  - role: sxhkd
+  - role: lightdm
+  - role: xfce
+  - role: alacritty
+  - role: tmux
+  - role: tdrop
+  - role: networklab

@@ -1,0 +1,18 @@
+---
+# tasks file for networklab
+- name: Install mininet
+  become: true
+  apt:
+    pkg:
+      - mininet
+      - python3-tk
+    state: latest
+
+- name: Install openvswitch
+  become: true
+  apt:
+    pkg:
+      - openvswitch-switch
+      - openvswitch-testcontroller
+      - openvswitch-vtep
+    state: latest

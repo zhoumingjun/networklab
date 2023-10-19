@@ -1,0 +1,33 @@
+---
+- name: Check if the executable exists
+  stat:
+    path: "{{ executable_path }}"
+  register: executable_stat
+
+- name: Create temporary directory
+  tempfile:
+    state: directory
+  register: temp_dir
+  when: executable_stat.stat.exists == false
+
+- name: Clone the Git repository if it doesn't exist
+  git:
+    repo: "{{ git_repo }}"
+    dest: "{{ temp_dir.path }}"
+    version: master
+  register: git_clone
+  when: executable_stat.stat.exists == false
+
+- name: Run make install if the executable doesn't exist
+  become: yes
+  command: make install
+  args:
+    chdir: "{{ temp_dir.path  }}"
+  when: executable_stat.stat.exists == false
+
+
+- name: Clean the Git repository
+  file:
+    path: "{{ temp_dir.path }}"
+    state: absent
+  when: executable_stat.stat.exists == false

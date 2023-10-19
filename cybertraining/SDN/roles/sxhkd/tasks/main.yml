@@ -1,0 +1,19 @@
+---
+# tasks file for sxhkd
+- name: Install sxhkd
+  become: yes
+  apt:
+    pkg:
+      - sxhkd
+    state: latest
+- name: Create directory if it doesn't exist
+  file:
+    path: "{{ ansible_env.HOME }}/.config/sxhkd"
+    state: directory
+    mode: '755'
+
+- name: copy .config/sxhkd/sxhkdrc
+  ansible.builtin.copy:
+    src: sxhkdrc
+    dest: "{{ ansible_env.HOME }}/.config/sxhkd"
+    mode: '755'

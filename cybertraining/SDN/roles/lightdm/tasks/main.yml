@@ -1,0 +1,15 @@
+---
+# tasks file for lightdm
+- name: Install lightdm
+  become: yes
+  apt:
+    pkg:
+      - lightdm
+    state: latest
+
+- name: Enable service lightdm, and not touch the state
+  become: yes
+  ansible.builtin.systemd:
+    name: lightdm
+    state: started
+    enabled: yes

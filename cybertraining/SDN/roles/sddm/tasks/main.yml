@@ -1,0 +1,15 @@
+---
+# tasks file for sddm
+- name: Install sddm
+  become: yes
+  apt:
+    pkg:
+      - sddm
+    state: latest
+
+- name: Enable service sddm, and not touch the state
+  become: yes
+  ansible.builtin.systemd:
+    name: sddm
+    state: started
+    enabled: yes

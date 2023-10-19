@@ -1,0 +1,8 @@
+---
+# tasks file for xfce4
+- name: Install xfce4
+  become: yes
+  apt:
+    pkg:
+      - xfce4
+    state: latest

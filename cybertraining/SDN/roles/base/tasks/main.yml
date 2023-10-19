@@ -1,0 +1,19 @@
+---
+# tasks file for base
+- name: Install packages
+  become: yes
+  apt:
+    pkg:
+      - make
+      # x
+      - x11-utils
+      - arandr
+      - rofi
+      - gawk
+      - xdotool
+    state: latest
+
+- name: Set timezone to Asia/Shanghai
+  become: yes
+  community.general.timezone:
+    name: Asia/Shanghai

@@ -3,24 +3,30 @@ all:
     linux:
       hosts:
         clab-bgp_frr-host11:
-          ansible_host: 172.20.20.4
-        clab-bgp_frr-host12:
-          ansible_host: 172.20.20.8
-        clab-bgp_frr-host21:
-          ansible_host: 172.20.20.5
-        clab-bgp_frr-host22:
-          ansible_host: 172.20.20.6
-        clab-bgp_frr-host31:
           ansible_host: 172.20.20.11
-        clab-bgp_frr-host32:
+        clab-bgp_frr-host12:
           ansible_host: 172.20.20.7
-        clab-bgp_frr-leaf1:
+        clab-bgp_frr-host21:
           ansible_host: 172.20.20.12
+        clab-bgp_frr-host22:
+          ansible_host: 172.20.20.10
+        clab-bgp_frr-host31:
+          ansible_host: 172.20.20.3
+        clab-bgp_frr-host32:
+          ansible_host: 172.20.20.6
+        clab-bgp_frr-host41:
+          ansible_host: 172.20.20.8
+        clab-bgp_frr-host42:
+          ansible_host: 172.20.20.14
+        clab-bgp_frr-leaf1:
+          ansible_host: 172.20.20.13
         clab-bgp_frr-leaf2:
           ansible_host: 172.20.20.9
         clab-bgp_frr-leaf3:
           ansible_host: 172.20.20.2
+        clab-bgp_frr-leaf4:
+          ansible_host: 172.20.20.5
         clab-bgp_frr-spine1:
-          ansible_host: 172.20.20.10
+          ansible_host: 172.20.20.15
         clab-bgp_frr-spine2:
-          ansible_host: 172.20.20.3
+          ansible_host: 172.20.20.4

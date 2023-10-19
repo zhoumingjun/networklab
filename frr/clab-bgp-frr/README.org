@@ -1,0 +1,179 @@
+#+property: header-args :results verbatim
+
+* setup
+#+begin_src bash
+sudo clab deploy
+#+end_src
+
+#+begin_src bash
+sudo clab destroy
+#+end_src
+
+
+#+begin_src bash
+sudo clab inspect
+#+end_src
+
+#+RESULTS:
+#+begin_example
++----+---------------------+--------------+-----------------------------+-------+---------+-----------------+----------------------+
+| #  |        Name         | Container ID |            Image            | Kind  |  State  |  IPv4 Address   |     IPv6 Address     |
++----+---------------------+--------------+-----------------------------+-------+---------+-----------------+----------------------+
+|  1 | clab-bgp_frr-host11 | e4e9297e4bb7 | nicolaka/netshoot:latest    | linux | running | 172.20.20.14/24 | 2001:172:20:20::e/64 |
+|  2 | clab-bgp_frr-host12 | 372f51d0e57e | nicolaka/netshoot:latest    | linux | running | 172.20.20.4/24  | 2001:172:20:20::4/64 |
+|  3 | clab-bgp_frr-host21 | 154385f15b45 | nicolaka/netshoot:latest    | linux | running | 172.20.20.15/24 | 2001:172:20:20::f/64 |
+|  4 | clab-bgp_frr-host22 | a3d093a4c885 | nicolaka/netshoot:latest    | linux | running | 172.20.20.10/24 | 2001:172:20:20::a/64 |
+|  5 | clab-bgp_frr-host31 | 7def83346799 | nicolaka/netshoot:latest    | linux | running | 172.20.20.13/24 | 2001:172:20:20::d/64 |
+|  6 | clab-bgp_frr-host32 | 6bd277d612e8 | nicolaka/netshoot:latest    | linux | running | 172.20.20.12/24 | 2001:172:20:20::c/64 |
+|  7 | clab-bgp_frr-host41 | a427750c8a1e | nicolaka/netshoot:latest    | linux | running | 172.20.20.11/24 | 2001:172:20:20::b/64 |
+|  8 | clab-bgp_frr-host42 | 264688cd4cf8 | nicolaka/netshoot:latest    | linux | running | 172.20.20.3/24  | 2001:172:20:20::3/64 |
+|  9 | clab-bgp_frr-leaf1  | 9ab40fa926df | quay.io/frrouting/frr:9.0.0 | linux | running | 172.20.20.2/24  | 2001:172:20:20::2/64 |
+| 10 | clab-bgp_frr-leaf2  | 3b0a2ad842fd | quay.io/frrouting/frr:9.0.0 | linux | running | 172.20.20.8/24  | 2001:172:20:20::8/64 |
+| 11 | clab-bgp_frr-leaf3  | 2cbde8f01b74 | quay.io/frrouting/frr:9.0.0 | linux | running | 172.20.20.7/24  | 2001:172:20:20::7/64 |
+| 12 | clab-bgp_frr-leaf4  | b6b48dac954b | quay.io/frrouting/frr:9.0.0 | linux | running | 172.20.20.6/24  | 2001:172:20:20::6/64 |
+| 13 | clab-bgp_frr-spine1 | bf4ea7477fc5 | quay.io/frrouting/frr:9.0.0 | linux | running | 172.20.20.9/24  | 2001:172:20:20::9/64 |
+| 14 | clab-bgp_frr-spine2 | 6e83a06e55c0 | quay.io/frrouting/frr:9.0.0 | linux | running | 172.20.20.5/24  | 2001:172:20:20::5/64 |
++----+---------------------+--------------+-----------------------------+-------+---------+-----------------+----------------------+
+#+end_example
+
+* runtime check
+
+
+** leaf to pc
+#+begin_src bash
+# leaf to pc
+for idx in {1..4..1}
+do
+  echo "===== test leaf ${idx} ====="
+  docker exec clab-bgp_frr-leaf${idx} ping -c1 192.168.${idx}1.2
+  docker exec clab-bgp_frr-leaf${idx} ping -c1 192.168.${idx}2.2
+done
+#+end_src
+
+#+RESULTS:
+#+begin_example
+===== test leaf 1 =====
+PING 192.168.11.2 (192.168.11.2): 56 data bytes
+64 bytes from 192.168.11.2: seq=0 ttl=64 time=0.053 ms
+
+--- 192.168.11.2 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.053/0.053/0.053 ms
+PING 192.168.12.2 (192.168.12.2): 56 data bytes
+64 bytes from 192.168.12.2: seq=0 ttl=64 time=0.039 ms
+
+--- 192.168.12.2 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.039/0.039/0.039 ms
+===== test leaf 2 =====
+PING 192.168.21.2 (192.168.21.2): 56 data bytes
+64 bytes from 192.168.21.2: seq=0 ttl=64 time=0.065 ms
+
+--- 192.168.21.2 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.065/0.065/0.065 ms
+PING 192.168.22.2 (192.168.22.2): 56 data bytes
+64 bytes from 192.168.22.2: seq=0 ttl=64 time=0.118 ms
+
+--- 192.168.22.2 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.118/0.118/0.118 ms
+===== test leaf 3 =====
+PING 192.168.31.2 (192.168.31.2): 56 data bytes
+64 bytes from 192.168.31.2: seq=0 ttl=64 time=0.115 ms
+
+--- 192.168.31.2 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.115/0.115/0.115 ms
+PING 192.168.32.2 (192.168.32.2): 56 data bytes
+64 bytes from 192.168.32.2: seq=0 ttl=64 time=0.068 ms
+
+--- 192.168.32.2 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.068/0.068/0.068 ms
+===== test leaf 4 =====
+PING 192.168.41.2 (192.168.41.2): 56 data bytes
+64 bytes from 192.168.41.2: seq=0 ttl=64 time=0.038 ms
+
+--- 192.168.41.2 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.038/0.038/0.038 ms
+PING 192.168.42.2 (192.168.42.2): 56 data bytes
+64 bytes from 192.168.42.2: seq=0 ttl=64 time=0.127 ms
+
+--- 192.168.42.2 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.127/0.127/0.127 ms
+#+end_example
+
+** pc to pc
+#+begin_src bash
+# pc to pc
+docker exec clab-bgp_frr-host11 ping -c1 192.168.11.2
+docker exec clab-bgp_frr-host11 ping -c1 192.168.12.2
+docker exec clab-bgp_frr-host11 ping -c1 192.168.21.2
+docker exec clab-bgp_frr-host11 ping -c1 192.168.22.2
+docker exec clab-bgp_frr-host11 ping -c1 192.168.31.2
+docker exec clab-bgp_frr-host11 ping -c1 192.168.32.2
+docker exec clab-bgp_frr-host11 ping -c1 192.168.41.2
+docker exec clab-bgp_frr-host11 ping -c1 192.168.42.2
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+PING 192.168.11.2 (192.168.11.2) 56(84) bytes of data.
+64 bytes from 192.168.11.2: icmp_seq=1 ttl=64 time=0.030 ms
+
+--- 192.168.11.2 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.030/0.030/0.030/0.000 ms
+PING 192.168.12.2 (192.168.12.2) 56(84) bytes of data.
+64 bytes from 192.168.12.2: icmp_seq=1 ttl=63 time=0.047 ms
+
+--- 192.168.12.2 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.047/0.047/0.047/0.000 ms
+PING 192.168.21.2 (192.168.21.2) 56(84) bytes of data.
+64 bytes from 192.168.21.2: icmp_seq=1 ttl=61 time=0.080 ms
+
+--- 192.168.21.2 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.080/0.080/0.080/0.000 ms
+PING 192.168.22.2 (192.168.22.2) 56(84) bytes of data.
+64 bytes from 192.168.22.2: icmp_seq=1 ttl=61 time=0.058 ms
+
+--- 192.168.22.2 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.058/0.058/0.058/0.000 ms
+PING 192.168.31.2 (192.168.31.2) 56(84) bytes of data.
+64 bytes from 192.168.31.2: icmp_seq=1 ttl=61 time=0.057 ms
+
+--- 192.168.31.2 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.057/0.057/0.057/0.000 ms
+PING 192.168.32.2 (192.168.32.2) 56(84) bytes of data.
+64 bytes from 192.168.32.2: icmp_seq=1 ttl=61 time=0.061 ms
+
+--- 192.168.32.2 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.061/0.061/0.061/0.000 ms
+PING 192.168.41.2 (192.168.41.2) 56(84) bytes of data.
+64 bytes from 192.168.41.2: icmp_seq=1 ttl=61 time=0.045 ms
+
+--- 192.168.41.2 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.045/0.045/0.045/0.000 ms
+PING 192.168.42.2 (192.168.42.2) 56(84) bytes of data.
+64 bytes from 192.168.42.2: icmp_seq=1 ttl=61 time=0.049 ms
+
+--- 192.168.42.2 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.049/0.049/0.049/0.000 ms
+#+end_example
+
+** mtr
+#+begin_src bash
+docker exec clab-bgp_frr-host11 traceroute  192.168.11.2
+
+#+end_src

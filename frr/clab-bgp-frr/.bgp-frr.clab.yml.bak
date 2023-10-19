@@ -34,6 +34,12 @@ topology:
       binds:
         - config/leaf3/daemons:/etc/frr/daemons
         - config/leaf3/frr.conf:/etc/frr/frr.conf
+    leaf4:
+      image: quay.io/frrouting/frr:9.0.0
+      binds:
+        - config/leaf4/daemons:/etc/frr/daemons
+        - config/leaf4/frr.conf:/etc/frr/frr.conf
+
     host11:
       exec:
         - ip addr add 192.168.11.2/24 dev eth1
@@ -58,17 +64,29 @@ topology:
       exec:
         - ip addr add 192.168.32.2/24 dev eth1
         - ip route replace 0/0 via 192.168.32.1
+    host41:
+      exec:
+        - ip addr add 192.168.41.2/24 dev eth1
+        - ip route replace 0/0 via 192.168.41.1
+    host42:
+      exec:
+        - ip addr add 192.168.42.2/24 dev eth1
+        - ip route replace 0/0 via 192.168.42.1
 
   links:
     - endpoints: ["spine1:eth1", "leaf1:eth1"]
     - endpoints: ["spine1:eth2", "leaf2:eth1"]
     - endpoints: ["spine1:eth3", "leaf3:eth1"]
+    - endpoints: ["spine1:eth4", "leaf4:eth1"]
     - endpoints: ["spine2:eth1", "leaf1:eth2"]
     - endpoints: ["spine2:eth2", "leaf2:eth2"]
     - endpoints: ["spine2:eth3", "leaf3:eth2"]
+    - endpoints: ["spine2:eth4", "leaf4:eth2"]
     - endpoints: ["host11:eth1", "leaf1:eth3"]
     - endpoints: ["host12:eth1", "leaf1:eth4"]
     - endpoints: ["host21:eth1", "leaf2:eth3"]
     - endpoints: ["host22:eth1", "leaf2:eth4"]
     - endpoints: ["host31:eth1", "leaf3:eth3"]
     - endpoints: ["host32:eth1", "leaf3:eth4"]
+    - endpoints: ["host41:eth1", "leaf4:eth3"]
+    - endpoints: ["host42:eth1", "leaf4:eth4"]
