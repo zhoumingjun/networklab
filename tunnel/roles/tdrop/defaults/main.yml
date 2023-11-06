@@ -1,0 +1,4 @@
+---
+# defaults file for tdrop
+git_repo: https://github.com/noctuid/tdrop.git
+executable_path: '/usr/local/bin/tdrop'

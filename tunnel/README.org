@@ -1,0 +1,193 @@
+#+title: tunning
+#+PROPERTY: header-args:bash :results verbatim
+* Overview
+[[https://costiser.ro/2016/07/07/overlay-tunneling-with-openvswitch-gre-vxlan-geneve-greoipsec/][Overlay Tunneling with Open vSwitch - GRETAP, VXLAN, Geneve, GREoIPsec - Cost...]]
+
+* Setup
+#+begin_src bash
+vagrant up
+#+end_src
+
+
+#+begin_src bash
+vagrant ssh-config > ~/.ssh/config
+#+end_src
+
+#+begin_src bash
+echo  `vagrant ssh node1 -c "ip -j address show eth0" | jq -r '.[].addr_info[] | select(.family == "inet").local'` node1 > hosts
+#+end_src
+
+#+RESULTS:
+
+#+begin_src bash
+echo  `vagrant ssh node2 -c "ip -j address show eth0" | jq -r '.[].addr_info[] | select(.family == "inet").local'` node2 >> hosts
+#+end_src
+
+#+begin_src bash
+cat hosts | sudo tee -a /etc/hosts
+
+#+end_src
+
+#+RESULTS:
+
+* Config
+
+#+BEGIN_SRC bash :dir /ssh:vagrant@node1|sudo:node1:~/
+sudo ip netns add left
+sudo ip link add name veth1 type veth peer name sw1-p1
+sudo ip link set dev veth1 netns left
+sudo ip netns exec left ip address add 10.0.0.1/24 dev veth1
+sudo ip netns exec left ip link set address 00:00:00:00:00:01 dev veth1
+sudo ip netns exec left ip link set veth1 up
+
+sudo ovs-vsctl add-br sw1
+sudo ovs-vsctl add-port sw1 sw1-p1
+sudo ip link set sw1-p1 up
+sudo ip link set sw1 up
+#+END_SRC
+
+
+#+BEGIN_SRC bash :dir /ssh:vagrant@node2|sudo:node2:~/
+sudo ip netns add right
+sudo ip link add name veth1 type veth peer name sw2-p1
+sudo ip link set dev veth1 netns right
+sudo ip netns exec right ip address add 10.0.0.2/24 dev veth1
+sudo ip netns exec right ip link set address 00:00:00:00:00:02 dev veth1
+sudo ip netns exec right ip link set veth1 up
+
+sudo ovs-vsctl add-br sw2
+sudo ovs-vsctl add-port sw2 sw2-p1
+sudo ip link set sw2-p1 up
+sudo ip link set sw2 up
+#+END_SRC
+
+#+RESULTS:
+* tunnel
+** GRE
+
+[[id:9f4555e7-82f5-471f-b9ca-4f8566c21f7a][GRE]]
+*** setup
+#+BEGIN_SRC bash :dir /ssh:vagrant@node1|sudo:node1:~/
+sudo ovs-vsctl add-port sw1 tun0 -- set Interface tun0 type=gre options:remote_ip=192.168.101.102
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC bash :dir /ssh:vagrant@node2|sudo:node2:~/
+sudo ovs-vsctl add-port sw2 tun0 -- set Interface tun0 type=gre options:remote_ip=192.168.101.101
+#+END_SRC
+
+#+RESULTS:
+
+*** Result
+=tpcdump -nn -vv -XX -e -i eth1=
+#+begin_quote
+09:32:31.342956 52:54:00:88:70:88 > 52:54:00:8e:14:f1, ethertype IPv4 (0x0800), length 80: (tos 0x0, ttl 64, id 16798, offset 0, flags [DF], proto GRE (47), length 66)
+    192.168.101.101 > 192.168.101.102: GREv0, Flags [none], proto TEB (0x6558), length 46
+	00:00:00:00:00:01 > 00:00:00:00:00:02, ethertype ARP (0x0806), length 42: Ethernet (len 6), IPv4 (len 4), Reply 10.0.0.1 is-at 00:00:00:00:00:01, length 28
+	0x0000:  5254 008e 14f1 5254 0088 7088 0800 4500  RT....RT..p...E.
+	0x0010:  0042 419e 4000 402f acd2 c0a8 6565 c0a8  .BA.@.@/....ee..
+	0x0020:  6566 0000 6558 0000 0000 0002 0000 0000  ef..eX..........
+	0x0030:  0001 0806 0001 0800 0604 0002 0000 0000  ................
+	0x0040:  0001 0a00 0001 0000 0000 0002 0a00 0002  ................
+
+#+end_quote
+** VXLAN
+[[id:e218718c-1808-4f19-a7fd-4b028286c1d3][VXLAN]]
+
+*** setup
+这里的 =options:key= 会被用作 VXLAN Network Identifier (VNI)
+#+BEGIN_SRC bash :dir /ssh:vagrant@node1|sudo:node1:~/
+sudo ovs-vsctl del-port tun0
+sudo ovs-vsctl add-port sw1 tun0 -- set interface tun0 type=vxlan options:remote_ip=192.168.101.102 options:key=123
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC bash :dir /ssh:vagrant@node2|sudo:node2:~/
+sudo ovs-vsctl del-port tun0
+sudo ovs-vsctl add-port sw2 tun0 -- set interface tun0 type=vxlan options:remote_ip=192.168.101.101 options:key=123
+#+END_SRC
+
+#+RESULTS:
+
+*** result
+=tpcdump -nn -vv -XX -e -i eth1=
+
+#+begin_quote
+09:45:46.207603 52:54:00:88:70:88 > 52:54:00:8e:14:f1, ethertype IPv4 (0x0800), length 148: (tos 0x0, ttl 64, id 21102, offset 0, flags [DF], proto UDP (17), length 134)
+    192.168.101.101.41709 > 192.168.101.102.4789: [no cksum] VXLAN, flags [I] (0x08), vni 123
+00:00:00:00:00:01 > 00:00:00:00:00:02, ethertype IPv4 (0x0800), length 98: (tos 0x0, ttl 64, id 59503, offset 0, flags [DF], proto ICMP (1), length 84)
+    10.0.0.1 > 10.0.0.2: ICMP echo request, id 8666, seq 7, length 64
+	0x0000:  5254 008e 14f1 5254 0088 7088 0800 4500  RT....RT..p...E.
+	0x0010:  0086 526e 4000 4011 9bdc c0a8 6565 c0a8  ..Rn@.@.....ee..
+	0x0020:  6566 a2ed 12b5 0072 0000 0800 0000 0000  ef.....r........
+	0x0030:  7b00 0000 0000 0002 0000 0000 0001 0800  {...............
+	0x0040:  4500 0054 e86f 4000 4001 3e37 0a00 0001  E..T.o@.@.>7....
+	0x0050:  0a00 0002 0800 0ddc 21da 0007 cadb 3165  ........!.....1e
+	0x0060:  0000 0000 0a2f 0300 0000 0000 1011 1213  ...../..........
+	0x0070:  1415 1617 1819 1a1b 1c1d 1e1f 2021 2223  .............!"#
+	0x0080:  2425 2627 2829 2a2b 2c2d 2e2f 3031 3233  $%&'()*+,-./0123
+	0x0090:  3435 3637                                4567
+09:45:46.207645 52:54:00:8e:14:f1 > 52:54:00:88:70:88, ethertype IPv4 (0x0800), length 148: (tos 0x0, ttl 64, id 18965, offset 0, flags [DF], proto UDP (17), length 134)
+    192.168.101.102.47795 > 192.168.101.101.4789: [no cksum] VXLAN, flags [I] (0x08), vni 123
+00:00:00:00:00:02 > 00:00:00:00:00:01, ethertype IPv4 (0x0800), length 98: (tos 0x0, ttl 64, id 42542, offset 0, flags [none], proto ICMP (1), length 84)
+    10.0.0.2 > 10.0.0.1: ICMP echo reply, id 8666, seq 7, length 64
+	0x0000:  5254 0088 7088 5254 008e 14f1 0800 4500  RT..p.RT......E.
+	0x0010:  0086 4a15 4000 4011 a435 c0a8 6566 c0a8  ..J.@.@..5..ef..
+	0x0020:  6565 bab3 12b5 0072 0000 0800 0000 0000  ee.....r........
+	0x0030:  7b00 0000 0000 0001 0000 0000 0002 0800  {...............
+	0x0040:  4500 0054 a62e 0000 4001 c078 0a00 0002  E..T....@..x....
+	0x0050:  0a00 0001 0000 15dc 21da 0007 cadb 3165  ........!.....1e
+	0x0060:  0000 0000 0a2f 0300 0000 0000 1011 1213  ...../..........
+	0x0070:  1415 1617 1819 1a1b 1c1d 1e1f 2021 2223  .............!"#
+	0x0080:  2425 2627 2829 2a2b 2c2d 2e2f 3031 3233  $%&'()*+,-./0123
+	0x0090:  3435 3637                                4567
+#+end_quote
+
+** Geneve
+*** Setup
+#+BEGIN_SRC bash :dir /ssh:vagrant@node1|sudo:node1:~/
+sudo ovs-vsctl del-port tun0
+sudo ovs-vsctl add-port sw1 tun0 -- set interface tun0 type=geneve options:remote_ip=192.168.101.102 options:key=123
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC bash :dir /ssh:vagrant@node2|sudo:node2:~/
+sudo ovs-vsctl del-port tun0
+sudo ovs-vsctl add-port sw2 tun0 -- set interface tun0 type=geneve options:remote_ip=192.168.101.101 options:key=123
+#+END_SRC
+
+#+RESULTS:
+
+*** Result
+#+begin_src
+#node1
+sudo ip netns exec left arping 10.0.0.2
+
+#node2
+tcpdump -nn -vv -XX -e -i eth1
+#+end_src
+
+#+begin_quote
+09:49:38.049427 52:54:00:88:70:88 > 52:54:00:8e:14:f1, ethertype IPv4 (0x0800), length 108: (tos 0x0, ttl 64, id 58064, offset 0, flags [DF], proto UDP (17), length 94)
+    192.168.101.101.31356 > 192.168.101.102.6081: [no cksum] Geneve, Flags [none], vni 0x7b, proto TEB (0x6558)
+	00:00:00:00:00:01 > ff:ff:ff:ff:ff:ff, ethertype ARP (0x0806), length 58: Ethernet (len 6), IPv4 (len 4), Request who-has 10.0.0.2 tell 10.0.0.1, length 44
+	0x0000:  5254 008e 14f1 5254 0088 7088 0800 4500  RT....RT..p...E.
+	0x0010:  005e e2d0 4000 4011 0ba2 c0a8 6565 c0a8  .^..@.@.....ee..
+	0x0020:  6566 7a7c 17c1 004a 0000 0000 6558 0000  efz|...J....eX..
+	0x0030:  7b00 ffff ffff ffff 0000 0000 0001 0806  {...............
+	0x0040:  0001 0800 0604 0001 0000 0000 0001 0a00  ................
+	0x0050:  0001 0000 0000 0000 0a00 0002 0000 0000  ................
+	0x0060:  0000 0000 0000 0000 0000 0000            ............
+09:49:38.049525 52:54:00:8e:14:f1 > 52:54:00:88:70:88, ethertype IPv4 (0x0800), length 92: (tos 0x0, ttl 64, id 43043, offset 0, flags [DF], proto UDP (17), length 78)
+    192.168.101.102.40596 > 192.168.101.101.6081: [no cksum] Geneve, Flags [none], vni 0x7b, proto TEB (0x6558)
+	00:00:00:00:00:02 > 00:00:00:00:00:01, ethertype ARP (0x0806), length 42: Ethernet (len 6), IPv4 (len 4), Reply 10.0.0.2 is-at 00:00:00:00:00:02, length 28
+	0x0000:  5254 0088 7088 5254 008e 14f1 0800 4500  RT..p.RT......E.
+	0x0010:  004e a823 4000 4011 465f c0a8 6566 c0a8  .N.#@.@.F_..ef..
+	0x0020:  6565 9e94 17c1 003a 0000 0000 6558 0000  ee.....:....eX..
+	0x0030:  7b00 0000 0000 0001 0000 0000 0002 0806  {...............
+	0x0040:  0001 0800 0604 0002 0000 0000 0002 0a00  ................
+	0x0050:  0002 0000 0000 0001 0a00 0001            ............
+#+end_quote

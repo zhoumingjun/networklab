@@ -1,0 +1,22 @@
+#+title: README
+
+Virtual Labs on Software Defined Networking (SDN)
+
+This lab series provides a detailed, hands-on experience to the new emerging networking paradigm, Software Defined Networking (SDN). The manual provides a thorough understanding for administering SDN networks using ONOS controller, demonstrating the available applications supported by ONOS, as well as leveraging their full capabilities.
+
+[http://ce.sc.edu/cyberinfra/workshops/Material/SDN/SDN.png]]
+| Lab 1       | Introduction to Mininet                                                                             |
+| Lab 2       | Legacy Networks: BGP Example as a Distributed System and Autonomous Forwarding Decisions            |
+| Lab 3       | Early efforts of SDN: MPLS Example of a Control Plane that Establishes Semi-static Forwarding Paths |
+| Lab 4       | Introduction to SDN                                                                                 |
+| Exercise 1  | SDN Network Configuration                                                                           |
+| Lab 5       | Configuring VXLAN to Provide Network Traffic Isolation                                              |
+| Exercise 2  | Configuring VXLAN                                                                                   |
+| Lab 6       | Introduction to OpenFlow                                                                            |
+| Exercise 3  | OpenFlow Protocol Management                                                                        |
+| Lab 7       | Routing within an SDN network                                                                       |
+| Lab 8       | Interconnection between Legacy Networks and SDN Networks                                            |
+| Exercise 4  | Incremental Deployment of SDN Networks within Legacy Networks                                       |
+| Lab 9       | Configuring Virtual Private LAN Service (VPLS)                                                      |
+| Lab 10      | Applying Equal-cost Multi-path Protocol (ECMP) within SDN networks                                  |
+| Lab Manuals | SDN Lab Series ([[http://ce.sc.edu/cyberinfra/workshops/Material/SDN/SDN_Labs.pdf][PDF]])           |

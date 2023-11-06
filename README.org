@@ -1,1 +1,2 @@
 #+title: Readme
+http://ce.sc.edu/cyberinfra/cybertraining.html

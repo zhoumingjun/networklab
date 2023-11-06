@@ -1,0 +1,26 @@
+---
+# tasks file for tmux
+- name: Install tmux
+  become: true
+  apt:
+    pkg:
+      - tmux
+    state: latest
+
+- name: Create directory if it doesn't exist
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/tmux"
+    state: directory
+    mode: '755'
+
+- name: copy .config/tmux/tmux.conf
+  ansible.builtin.copy:
+    src: tmux.conf
+    dest: "{{ ansible_env.HOME }}/.config/tmux"
+    mode: '666'
+
+- name: Git checkout
+  ansible.builtin.git:
+    repo: 'https://github.com/tmux-plugins/tpm'
+    dest: '~/.config/tmux/plugins/tpm'
+    version: master
